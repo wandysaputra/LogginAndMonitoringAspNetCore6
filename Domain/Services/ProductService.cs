@@ -1,12 +1,20 @@
 ﻿using Domain.Models;
 using Domain.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Domain.Services;
 
 public class ProductService : IProductService
 {
+    private readonly ILogger<ProductService> _logger;
+
+    public ProductService(ILogger<ProductService> logger)
+    {
+        _logger = logger;
+    }
     public Task<IEnumerable<Product>> GetProductsForCategory(string category)
     {
+        _logger.LogInformation("Getting products in Service for {category}", category);
         return Task.FromResult(GetAllProducts().Where(a =>
             string.Equals("all", category, StringComparison.InvariantCultureIgnoreCase) ||
             string.Equals(category, a.Category, StringComparison.InvariantCultureIgnoreCase)));
