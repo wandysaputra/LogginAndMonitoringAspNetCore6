@@ -1,37 +1,49 @@
 ﻿using Domain.Models;
 using Domain.Services.Interfaces;
+using Mapster;
 using Microsoft.Extensions.Logging;
+using Repository.Interfaces;
 
 namespace Domain.Services;
 
 public class ProductService : IProductService
 {
     private readonly ILogger<ProductService> _logger;
+    private readonly IProductRepository _productRepository;
 
-    public ProductService(ILogger<ProductService> logger)
+    public ProductService(ILogger<ProductService> logger, IProductRepository productRepository )
     {
         _logger = logger;
-    }
-    public Task<IEnumerable<Product>> GetProductsForCategory(string category)
-    {
-        _logger.LogInformation("Getting products in Service for {category}", category);
-        return Task.FromResult(GetAllProducts().Where(a =>
-            string.Equals("all", category, StringComparison.InvariantCultureIgnoreCase) ||
-            string.Equals(category, a.Category, StringComparison.InvariantCultureIgnoreCase)));
+        _productRepository = productRepository;
     }
 
-    private static IEnumerable<Product> GetAllProducts()
+    public async Task<IEnumerable<Product>> GetProductsForCategoryAsync(string category)
     {
-        return new List<Product>
-        {
-            new Product { Id = 1, Name = "Trailblazer", Category = "boots", Price = 69.99,
-                Description = "Great support in this high-top to take you to great heights and trails." },
-            new Product { Id = 2, Name = "Coastliner", Category = "boots", Price = 49.99,
-                Description = "Easy in and out with this lightweight but rugged shoe with great ventilation to get your around shores, beaches, and boats." },
-            new Product { Id = 3, Name = "Woodsman", Category = "boots", Price = 64.99,
-                Description = "All the insulation and support you need when wandering the rugged trails of the woods and backcountry."},
-            new Product { Id = 4, Name = "Billy", Category = "boots", Price = 79.99,
-                Description = "Get up and down rocky terrain like a billy-goat with these awesome high-top boots with outstanding support." },
-        };
+        _logger.LogInformation("Getting products in service for {category}", category);
+
+        var products = await _productRepository.GetProductsAsync(category);
+        
+        return products.Adapt<IEnumerable<Product>>();
+    }
+
+    public async Task<Product?> GetProductByIdAsync(int id)
+    {
+        _logger.LogInformation("Getting single product async in service for {id}", id);
+
+        var product =  await _productRepository.GetProductByIdAsync(id);
+        
+        return product?.Adapt<Product>();
+    }
+
+    public IEnumerable<Models.Product> GetProductsForCategory(string category)
+    {
+        return _productRepository.GetProducts(category).Adapt<IEnumerable<Product>>();
+    }
+
+    public Product? GetProductById(int id)
+    {
+        _logger.LogInformation("Getting single product in service for {id}", id);
+
+        return _productRepository.GetProductById(id)?.Adapt<Product>();
     }
 }

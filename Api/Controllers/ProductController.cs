@@ -21,6 +21,27 @@ public class ProductController : ControllerBase
     public async Task<IEnumerable<Product>> Get(string category = "all")
     {
         _logger.LogInformation("Getting products from API for {category}", category);
-        return await _productService.GetProductsForCategory(category);
+        return await _productService.GetProductsForCategoryAsync(category);
+    }
+
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(Product), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> Get(int id)
+    {
+        _logger.LogDebug("Getting single product in API for {id}", id);
+
+        // var product = await _productService.GetProductByIdAsync(id);
+        var product = _productService.GetProductById(id);
+
+
+        if (product != null)
+        {
+            return Task.FromResult<IActionResult>(Ok(product));
+        }
+
+        _logger.LogWarning("No product found for ID: {id}", id);
+
+        return Task.FromResult<IActionResult>(NotFound());
     }
 }
