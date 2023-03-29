@@ -10,11 +10,13 @@ public class ProductRepository : IProductRepository
 {
     private readonly LocalContext _ctx;
     private readonly ILogger<ProductRepository> _logger;
+    private readonly ILogger _factoryLogger;
 
-    public ProductRepository(LocalContext ctx, ILogger<ProductRepository> logger)
+    public ProductRepository(LocalContext ctx, ILogger<ProductRepository> logger, ILoggerFactory loggerFactory)
     {
         _ctx = ctx;
         _logger = logger;
+        _factoryLogger = loggerFactory.CreateLogger("DataAccessLayer");
     }
     public async Task<List<Product>> GetProductsAsync(string category)
     {
@@ -45,6 +47,8 @@ public class ProductRepository : IProductRepository
         timer.Stop();
 
         _logger.LogDebug("Querying products for {id} finished in {milliseconds} milliseconds", id, timer.ElapsedMilliseconds);
+        _factoryLogger.LogInformation("[DAL] Querying products for {id} finished in {ticks} ticks", id, timer.ElapsedTicks);
+
         return productById;
     }
 }

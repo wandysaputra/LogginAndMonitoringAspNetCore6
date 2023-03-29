@@ -35,7 +35,7 @@ public class ProductService : IProductService
         return product?.Adapt<Product>();
     }
 
-    public IEnumerable<Models.Product> GetProductsForCategory(string category)
+    public IEnumerable<Product> GetProductsForCategory(string category)
     {
         return _productRepository.GetProducts(category).Adapt<IEnumerable<Product>>();
     }
