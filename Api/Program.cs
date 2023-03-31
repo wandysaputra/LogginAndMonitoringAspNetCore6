@@ -5,11 +5,11 @@ using Repository;
 using Repository.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
-
-var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); //C:\Users\<user>\AppData\Local
-var tracePath = Path.Join(path, $"LoggingAndMonitoringAspNetCore_{DateTime.Now.ToString("yyyyMMdd-HHmm")}.txt");
-Trace.Listeners.Add(new TextWriterTraceListener(System.IO.File.CreateText(tracePath)));
-Trace.AutoFlush = true;
+builder.Logging.AddFilter("", LogLevel.Debug);
+//var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); //C:\Users\<user>\AppData\Local
+//var tracePath = Path.Join(path, $"LoggingAndMonitoringAspNetCore_{DateTime.Now.ToString("yyyyMMdd-HHmm")}.txt");
+//Trace.Listeners.Add(new TextWriterTraceListener(System.IO.File.CreateText(tracePath)));
+//Trace.AutoFlush = true;
 
 
 // Add services to the container.
