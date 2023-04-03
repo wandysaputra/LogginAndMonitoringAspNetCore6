@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Repository.Entities;
@@ -21,8 +22,28 @@ public class ProductRepository : IProductRepository
     public async Task<List<Product>> GetProductsAsync(string category)
     {
         _logger.LogInformation("Getting products async in repository for {category}", category);
+        if (category == "clothing")
+        {
+            var ex = new ApplicationException("Database error occurred!!");
+            ex.Data.Add("Category", category);
+            throw ex;
+        }
+        if (category == "equip")
+        {
+            throw new SqliteException("Simulated fatal database error occurred!", 551);
+        }
 
-        return await _ctx.Products.Where(p => p.Category == category || category == "all").ToListAsync();
+        try
+        {
+            return await _ctx.Products.Where(p => p.Category == category || category == "all").ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            var newEx = new ApplicationException("Something bad happened in database", ex);
+            newEx.Data.Add("Category", category);
+            throw newEx;
+        }
+        
     }
 
     public async Task<Product?> GetProductByIdAsync(int id)
