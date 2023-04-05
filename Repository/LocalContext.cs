@@ -16,8 +16,7 @@ public class LocalContext : DbContext
 
         if (Products.Any())
         {
-            Products.RemoveRange(Products);
-            SaveChanges();
+            return;
         }
 
         Products.Add(new Product
