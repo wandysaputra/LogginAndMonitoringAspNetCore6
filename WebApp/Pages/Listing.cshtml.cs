@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebApp.Models;
 
@@ -6,10 +7,12 @@ namespace WebApp.Pages;
 public class ListingModel : PageModel
 {
     private readonly HttpClient _apiClient;
+    private readonly ILogger<ListingModel> _logger;
 
-    public ListingModel(HttpClient apiClient)
+    public ListingModel(HttpClient apiClient, ILogger<ListingModel> logger)
     {
         _apiClient = apiClient;
+        _logger = logger;
         _apiClient.BaseAddress = new Uri("https://localhost:7018/api/");
     }
 
@@ -27,6 +30,13 @@ public class ListingModel : PageModel
         var response = await _apiClient.GetAsync($"Product?category={cat}");
         if (!response.IsSuccessStatusCode)
         {
+            var fullPath = $"{_apiClient.BaseAddress}Product?category={cat}";
+
+            var details = await response.Content.ReadFromJsonAsync<ProblemDetails>() ?? new ProblemDetails();
+            var traceId = details.Extensions["traceId"]?.ToString();
+            _logger.LogWarning("API failure: {fullPath} Response: {response}, Trace: {trace}", fullPath,
+                (int)response.StatusCode, traceId);
+
             throw new Exception("API call failed!");
         }
 
