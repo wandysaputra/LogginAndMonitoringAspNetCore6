@@ -25,6 +25,8 @@ namespace WebApp.Pages
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
             CurrentActivity = Activity.Current;
             TraceId = HttpContext.TraceIdentifier;
+            var userName = User.Identity?.Name ?? string.Empty;
+            _logger.LogWarning("User {user} experienced an error", userName);
         }
     }
 }

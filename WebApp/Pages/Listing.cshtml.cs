@@ -34,8 +34,10 @@ public class ListingModel : PageModel
 
             var details = await response.Content.ReadFromJsonAsync<ProblemDetails>() ?? new ProblemDetails();
             var traceId = details.Extensions["traceId"]?.ToString();
-            _logger.LogWarning("API failure: {fullPath} Response: {response}, Trace: {trace}", fullPath,
-                (int)response.StatusCode, traceId);
+            var userName = User.Identity?.Name ?? string.Empty;
+
+            _logger.LogWarning("API failure: {fullPath} Response: {response}, Trace: {trace}, User: {user}", fullPath,
+                (int)response.StatusCode, traceId, userName);
 
             throw new Exception("API call failed!");
         }
