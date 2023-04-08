@@ -20,12 +20,10 @@ public class ProductController : ControllerBase
     [HttpGet]
     public async Task<IEnumerable<Product>> Get(string category = "all")
     {
-        var userName = User.Identity?.Name ?? string.Empty;
-        using (_logger.BeginScope("ScopeUser: {user}, ScopeCategory: {category}", userName, category))
+        using (_logger.BeginScope("ScopeCategory: {category}", category))
         {
             _logger.LogInformation(Events.GettingProducts,
-                "Getting products from API for {category} and user {user}",
-                category, userName);
+                "Getting products from API.");
             return await _productService.GetProductsForCategoryAsync(category);
         }
     }
