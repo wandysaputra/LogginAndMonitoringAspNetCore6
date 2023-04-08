@@ -1,11 +1,15 @@
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using Api;
 using Domain.Services;
 using Domain.Services.Interfaces;
 using Hellang.Middleware.ProblemDetails;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Interfaces;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,11 +33,25 @@ builder.Services.AddProblemDetails(config =>
     config.MapToStatusCode<Exception>(StatusCodes.Status500InternalServerError);
 });
 
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = "https://demo.duendesoftware.com";
+        options.Audience = "api";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = "email"
+        };
+    });
+
+
 // Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, SwaggerOptions>();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IProductService, ProductService>();
@@ -56,15 +74,23 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.OAuthClientId("interactive.public.short");
+        options.OAuthAppName("API");
+        options.OAuthUsePkce();
+    });
 }
 
 app.MapFallback(() => Results.Redirect("/swagger"));
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers()
+    .RequireAuthorization();
 
 app.Run();
