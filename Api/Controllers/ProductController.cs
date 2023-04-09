@@ -6,11 +6,13 @@ namespace Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProductController : ControllerBase
+public partial class ProductController : ControllerBase
 {
     private readonly IProductService _productService;
     private readonly ILogger<ProductController> _logger;
-
+    
+    [LoggerMessage(Events.GettingProducts, LogLevel.Information, "SourceGenerated - Getting products in API.")]
+    partial void LogGettingProduct();
     public ProductController(IProductService productService, ILogger<ProductController> logger)
     {
         _productService = productService;
@@ -22,8 +24,8 @@ public class ProductController : ControllerBase
     {
         using (_logger.BeginScope("ScopeCategory: {category}", category))
         {
-            _logger.LogInformation(Events.GettingProducts,
-                "Getting products from API.");
+            LogGettingProduct();
+            // _logger.LogInformation(Events.GettingProducts, "Getting products from API.");
             return await _productService.GetProductsForCategoryAsync(category);
         }
     }

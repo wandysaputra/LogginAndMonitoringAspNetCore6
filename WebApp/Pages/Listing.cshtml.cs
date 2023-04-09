@@ -4,20 +4,22 @@ using WebApp.Models;
 
 namespace WebApp.Pages;
 
-public class ListingModel : PageModel
+public partial class ListingModel : PageModel
 {
-    private readonly HttpClient _apiClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ListingModel> _logger;
 
-    public ListingModel(HttpClient apiClient, ILogger<ListingModel> logger)
+    public ListingModel(HttpClient apiClient, IHttpClientFactory httpClientFactory, ILogger<ListingModel> logger)
     {
-        _apiClient = apiClient;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
-        _apiClient.BaseAddress = new Uri("https://localhost:7018/api/");
     }
 
     public List<Product> Products { get; set; }
     public string CategoryName { get; set; } = "";
+
+    [LoggerMessage(0, LogLevel.Warning, "SourceGenerated - API failure: {fullPath} Response: {statusCode}, Trace: {traceId}")]
+    partial void LogApiFailure(string fullPath, int statusCode, string traceId);
 
     public async Task OnGetAsync()
     {
@@ -26,18 +28,17 @@ public class ListingModel : PageModel
         {
             throw new Exception("failed");
         }
-
-        var response = await _apiClient.GetAsync($"Product?category={cat}");
+        var apiClient = _httpClientFactory.CreateClient("APIClient");
+        var response = await apiClient.GetAsync($"Product?category={cat}");
         if (!response.IsSuccessStatusCode)
         {
-            var fullPath = $"{_apiClient.BaseAddress}Product?category={cat}";
+            var fullPath = $"{apiClient.BaseAddress}Product?category={cat}";
 
             var details = await response.Content.ReadFromJsonAsync<ProblemDetails>() ?? new ProblemDetails();
             var traceId = details.Extensions["traceId"]?.ToString();
-            var userName = User.Identity?.Name ?? string.Empty;
 
-            _logger.LogWarning("API failure: {fullPath} Response: {response}, Trace: {trace}, User: {user}", fullPath,
-                (int)response.StatusCode, traceId, userName);
+            LogApiFailure(fullPath, (int)response.StatusCode, traceId ?? string.Empty);
+            // _logger.LogWarning("API failure: {fullPath} Response: {response}, Trace: {trace}, User: {user}", fullPath, (int)response.StatusCode, traceId, userName);
 
             throw new Exception("API call failed!");
         }

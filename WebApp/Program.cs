@@ -1,7 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
+using WebApp;
 
 var builder = WebApplication.CreateBuilder(args);
 /*
@@ -27,6 +28,20 @@ builder.Services.AddW3CLogging(option =>
 });
 */
 
+// create an HttpClient used for accessing the API
+builder.Services.AddHttpClient("APIClient", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7018/api/");
+    client.DefaultRequestHeaders.Clear();
+    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+}).AddUserAccessTokenHandler(); // to handle Bearer required by API authentication
+
+// create an HttpClient used for accessing the API
+builder.Services.AddHttpClient("IDPClient", client =>
+{
+    client.BaseAddress = new Uri("https://demo.duendesoftware.com");
+});
+
 JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 builder.Services.AddAccessTokenManagement(); // https://identitymodel.readthedocs.io/en/latest/aspnetcore/web.html
 builder.Services.AddAuthentication(options =>
@@ -41,6 +56,7 @@ builder.Services.AddAuthentication(options =>
             // revoke refresh token on sign-out
             await e.HttpContext.RevokeUserRefreshTokenAsync();
         };
+        options.AccessDeniedPath = "/Authentication/AccessDenied"; // handles redirection when access is denied
     })
     .AddOpenIdConnect("oidc", options =>
     {
@@ -89,7 +105,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
 app.UseAuthentication();
+
+app.UseMiddleware<UserScopeMiddleware>();
+
 app.UseAuthorization();
 
 app.MapRazorPages()
