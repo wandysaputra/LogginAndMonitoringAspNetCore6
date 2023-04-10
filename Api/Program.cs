@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using Api;
+// using Api;
 using Domain.Services;
 using Domain.Services.Interfaces;
 using Hellang.Middleware.ProblemDetails;
@@ -9,14 +10,36 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Repository;
 using Repository.Interfaces;
+using Serilog;
+using Serilog.Context;
+using Serilog.Exceptions;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using CorrelationIdHeaderSupplierMiddlewareExtensions = WebApp.CorrelationIdHeaderSupplierMiddlewareExtensions;
+using UserScopeMiddleware = WebApp.UserScopeMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
-builder.Logging.AddJsonConsole();
-//builder.Logging.AddDebug();
-builder.Services.AddApplicationInsightsTelemetry();
+// builder.Logging.AddJsonConsole();
+// builder.Logging.AddDebug();
+// builder.Services.AddApplicationInsightsTelemetry();
+
+/* https://hub.docker.com/r/datalust/seq/
+ * docker pull datalust/seq
+ * docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
+ */
+builder.Host.UseSerilog((context, loggerConfig) =>
+{
+    loggerConfig
+    .WriteTo.Console() // Writes log events to System.Console
+    // .Enrich.WithCorrelationId()
+    .Enrich.WithCorrelationIdHeader()
+    .Enrich.WithClientIp()
+    .Enrich.WithClientAgent()
+    .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+    .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+    .WriteTo.Seq("http://localhost:5341");
+});
 
 builder.Logging.AddFilter("", LogLevel.Debug);
 //var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); //C:\Users\<user>\AppData\Local
@@ -64,6 +87,22 @@ builder.Services.AddDbContext<LocalContext>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
+
+//app.UseSerilogRequestLogging(options =>
+//{
+//    options.MessageTemplate =
+//        "{RemoteIpAddress} {RequestScheme} {RequestHost} {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+//    options.EnrichDiagnosticContext = (
+//        diagnosticContext,
+//        httpContext) =>
+//    {
+//        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+//        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+//        diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress);
+//    };
+//});
+
+app.UseCorrelationIdHeaderSupplier();
 
 app.UseMiddleware<CriticalExceptionMiddleware>();
 app.UseProblemDetails();

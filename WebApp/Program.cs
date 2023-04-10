@@ -2,14 +2,33 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using Serilog;
+using Serilog.Exceptions;
 using WebApp;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
-builder.Logging.AddJsonConsole();
+// builder.Logging.AddJsonConsole();
 // builder.Logging.AddDebug();
-builder.Services.AddApplicationInsightsTelemetry();
+// builder.Services.AddApplicationInsightsTelemetry();
+
+/* https://hub.docker.com/r/datalust/seq/
+ * docker pull datalust/seq
+ * docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
+ */
+builder.Host.UseSerilog((context, loggerConfig) =>
+{
+    loggerConfig
+        .WriteTo.Console() // Writes log events to System.Console
+        .Enrich.WithCorrelationId()
+        .Enrich.WithCorrelationIdHeader()
+        .Enrich.WithClientIp()
+        .Enrich.WithClientAgent()
+        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+        .WriteTo.Seq("http://localhost:5341");
+});
 
 /*
 builder.Services.AddHttpLogging(logging =>
@@ -95,6 +114,22 @@ builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+//app.UseSerilogRequestLogging(options =>
+//{
+//    options.MessageTemplate =
+//        "{RemoteIpAddress} {RequestScheme} {RequestHost} {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+//    options.EnrichDiagnosticContext = (
+//        diagnosticContext,
+//        httpContext) =>
+//    {
+//        diagnosticContext.Set("RequestHost", httpContext.Request.Host.Value);
+//        diagnosticContext.Set("RequestScheme", httpContext.Request.Scheme);
+//        diagnosticContext.Set("RemoteIpAddress", httpContext.Connection.RemoteIpAddress);
+//    };
+//});
+app.UseCorrelationIdHeaderSupplier();
+
 /*
 app.UseHttpLogging();
 app.UseW3CLogging();
