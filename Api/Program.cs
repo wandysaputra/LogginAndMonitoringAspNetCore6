@@ -8,6 +8,8 @@ using Hellang.Middleware.ProblemDetails;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NLog;
+using NLog.Web;
 using Repository;
 using Repository.Interfaces;
 using Serilog;
@@ -15,6 +17,7 @@ using Serilog.Context;
 using Serilog.Exceptions;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using CorrelationIdHeaderSupplierMiddlewareExtensions = WebApp.CorrelationIdHeaderSupplierMiddlewareExtensions;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using UserScopeMiddleware = WebApp.UserScopeMiddleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,18 +31,21 @@ builder.Logging.ClearProviders();
  * docker pull datalust/seq
  * docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
  */
-builder.Host.UseSerilog((context, loggerConfig) =>
-{
-    loggerConfig
-    .WriteTo.Console() // Writes log events to System.Console
-    // .Enrich.WithCorrelationId()
-    .Enrich.WithCorrelationIdHeader()
-    .Enrich.WithClientIp()
-    .Enrich.WithClientAgent()
-    .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
-    .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
-    .WriteTo.Seq("http://localhost:5341");
-});
+// builder.Host.UseSerilog((context, loggerConfig) =>
+// {
+//     loggerConfig
+//     .WriteTo.Console() // Writes log events to System.Console
+//     // .Enrich.WithCorrelationId()
+//     .Enrich.WithCorrelationIdHeader()
+//     .Enrich.WithClientIp()
+//     .Enrich.WithClientAgent()
+//     .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+//     .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+//     .WriteTo.Seq("http://localhost:5341");
+// });
+
+NLog.LogManager.Setup().LoadConfigurationFromFile();
+builder.Host.UseNLog();
 
 builder.Logging.AddFilter("", LogLevel.Debug);
 //var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); //C:\Users\<user>\AppData\Local

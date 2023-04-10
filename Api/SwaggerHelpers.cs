@@ -54,7 +54,7 @@ public class SwaggerOptions : IConfigureOptions<SwaggerGenOptions>
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("Error loading discovery document for Swagger UI");
+            _logger.LogWarning(ex, "Error loading discovery document for Swagger UI");
         }
     }
     

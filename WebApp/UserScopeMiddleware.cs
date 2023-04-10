@@ -37,7 +37,7 @@ public class UserScopeMiddleware
             var subjectId = user.Claims.First(c=> c.Type == "sub")?.Value;
 
             state.TryAdd("User", maskedUsername);
-            state.TryAdd("SubjectId", subjectId);
+            state.TryAdd("SubjectId", subjectId ?? string.Empty);
         }
         
         using (_logger.BeginScope(state))
@@ -51,9 +51,9 @@ public class UserScopeMiddleware
         string str = string.Empty;
         StringValues source;
         if (context.Request.Headers.TryGetValue(CorrelationIdConstants.CorrelationIdHeaderKey, out source))
-            str = source.FirstOrDefault<string>();
+            str = source.FirstOrDefault<string>() ?? string.Empty;
         else if (context.Response.Headers.TryGetValue(CorrelationIdConstants.CorrelationIdHeaderKey, out source))
-            str = source.FirstOrDefault<string>();
+            str = source.FirstOrDefault<string>() ?? string.Empty;
         string correlationId = string.IsNullOrEmpty(str) ? Guid.NewGuid().ToString() : str;
         return correlationId;
     }

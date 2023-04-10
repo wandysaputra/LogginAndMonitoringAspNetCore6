@@ -2,6 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
+using NLog;
+using NLog.Web;
 using Serilog;
 using Serilog.Exceptions;
 using WebApp;
@@ -17,18 +19,30 @@ builder.Logging.ClearProviders();
  * docker pull datalust/seq
  * docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
  */
-builder.Host.UseSerilog((context, loggerConfig) =>
-{
-    loggerConfig
-        .WriteTo.Console() // Writes log events to System.Console
-        .Enrich.WithCorrelationId()
-        .Enrich.WithCorrelationIdHeader()
-        .Enrich.WithClientIp()
-        .Enrich.WithClientAgent()
-        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
-        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
-        .WriteTo.Seq("http://localhost:5341");
-});
+//builder.Host.UseSerilog((context, loggerConfig) =>
+//{
+//    loggerConfig
+//        .WriteTo.Console() // Writes log events to System.Console
+//        .Enrich.WithCorrelationId()
+//        .Enrich.WithCorrelationIdHeader()
+//        .Enrich.WithClientIp()
+//        .Enrich.WithClientAgent()
+//        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+//        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+//        .WriteTo.Seq("http://localhost:5341");
+//});
+
+/* https://hub.docker.com/r/splunk/splunk/
+ * docker pull splunk/splunk
+ * docker run -d -p 8000:8000 -p 8088:8088 -e "SPLUNK_START_ARGS=--accept-license" -e "SPLUNK_PASSWORD=Password123" --name splunk splunk/splunk:latest
+ * 1. Login to Splunk at localhost:8000
+ * 2. go to Settings > Data Inputs > HTTP Event Collector > Global Settings
+ * 3. Make sure it enables and un-check SSL for local dev also make sure HTTP port number 8088 mapped in docker command
+ * 4. Create new token by click `New Token` button
+ * 5. In `New Token` wizard, give the `Name` and set `main` index, click submit then copy the token provided and paste it into nlog.config
+ */
+NLog.LogManager.Setup().LoadConfigurationFromFile();
+builder.Host.UseNLog();
 
 /*
 builder.Services.AddHttpLogging(logging =>

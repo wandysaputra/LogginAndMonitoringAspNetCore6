@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace WebApp.Pages.Authentication;
 
+[Authorize]
 public partial class AccessDeniedModel : PageModel
 {
     private readonly IHttpClientFactory _httpClientFactory;
@@ -18,7 +19,6 @@ public partial class AccessDeniedModel : PageModel
         _logger = logger;
     }
 
-    [Authorize]
     public async Task OnGet()
     {
         var clientIDP = _httpClientFactory.CreateClient("IDPClient");

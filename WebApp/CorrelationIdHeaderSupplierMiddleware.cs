@@ -35,9 +35,9 @@ public class CorrelationIdHeaderSupplierMiddleware
         string str = string.Empty;
         StringValues source;
         if (context.Request.Headers.TryGetValue(CorrelationIdConstants.CorrelationIdHeaderKey, out source))
-            str = source.FirstOrDefault<string>();
+            str = source.FirstOrDefault<string>() ?? string.Empty;
         else if (context.Response.Headers.TryGetValue(CorrelationIdConstants.CorrelationIdHeaderKey, out source))
-            str = source.FirstOrDefault<string>();
+            str = source.FirstOrDefault<string>() ?? string.Empty;
         string correlationId = string.IsNullOrEmpty(str) ? Guid.NewGuid().ToString() : str;
         return correlationId;
     }
