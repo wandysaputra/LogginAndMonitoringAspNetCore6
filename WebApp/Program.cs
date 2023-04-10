@@ -8,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
-builder.Logging.AddDebug();
+// builder.Logging.AddDebug();
+builder.Services.AddApplicationInsightsTelemetry();
 
 /*
 builder.Services.AddHttpLogging(logging =>

@@ -15,7 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
-builder.Logging.AddDebug();
+//builder.Logging.AddDebug();
+builder.Services.AddApplicationInsightsTelemetry();
 
 builder.Logging.AddFilter("", LogLevel.Debug);
 //var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData); //C:\Users\<user>\AppData\Local
