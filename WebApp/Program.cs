@@ -5,6 +5,11 @@ using Microsoft.Net.Http.Headers;
 using WebApp;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole();
+builder.Logging.AddDebug();
+
 /*
 builder.Services.AddHttpLogging(logging =>
 {
