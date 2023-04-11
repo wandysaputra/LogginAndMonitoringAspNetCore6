@@ -19,18 +19,18 @@ builder.Logging.ClearProviders();
  * docker pull datalust/seq
  * docker run --name seq -d --restart unless-stopped -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
  */
-//builder.Host.UseSerilog((context, loggerConfig) =>
-//{
-//    loggerConfig
-//        .WriteTo.Console() // Writes log events to System.Console
-//        .Enrich.WithCorrelationId()
-//        .Enrich.WithCorrelationIdHeader()
-//        .Enrich.WithClientIp()
-//        .Enrich.WithClientAgent()
-//        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
-//        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
-//        .WriteTo.Seq("http://localhost:5341");
-//});
+builder.Host.UseSerilog((context, loggerConfig) =>
+{
+    loggerConfig
+        .WriteTo.Console() // Writes log events to System.Console
+        .Enrich.WithCorrelationId()
+        .Enrich.WithCorrelationIdHeader()
+        .Enrich.WithClientIp()
+        .Enrich.WithClientAgent()
+        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+        .WriteTo.Seq("http://localhost:5341");
+});
 
 /* https://hub.docker.com/r/splunk/splunk/
  * docker pull splunk/splunk
@@ -41,8 +41,8 @@ builder.Logging.ClearProviders();
  * 4. Create new token by click `New Token` button
  * 5. In `New Token` wizard, give the `Name` and set `main` index, click submit then copy the token provided and paste it into nlog.config
  */
-NLog.LogManager.Setup().LoadConfigurationFromFile();
-builder.Host.UseNLog();
+// NLog.LogManager.Setup().LoadConfigurationFromFile();
+// builder.Host.UseNLog();
 
 /*
 builder.Services.AddHttpLogging(logging =>
@@ -126,6 +126,7 @@ builder.Services.AddHttpContextAccessor();
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddHttpClient();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -169,5 +170,5 @@ app.UseAuthorization();
 
 app.MapRazorPages()
     .RequireAuthorization();
-
+app.MapHealthChecks("health").AllowAnonymous();
 app.Run();
