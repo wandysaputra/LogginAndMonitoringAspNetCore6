@@ -23,13 +23,15 @@ builder.Logging.ClearProviders();
 builder.Host.UseSerilog((context, loggerConfig) =>
 {
     loggerConfig
+        .ReadFrom.Configuration(context.Configuration)
         .WriteTo.Console() // Writes log events to System.Console
         .Enrich.WithCorrelationId()
         .Enrich.WithCorrelationIdHeader()
         .Enrich.WithClientIp()
         .Enrich.WithClientAgent()
         .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
-        .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+        .Enrich
+        .WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
         .WriteTo.Seq("http://localhost:5341");
 });
 
@@ -159,7 +161,7 @@ app.UseW3CLogging();
     app.UseHsts();
 // }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();  // commented so Seq in docker can access it to do health check (note: change http://localhost:5245/health to http://host.docker.internal:5245/health)
 app.UseStaticFiles();
 
 app.UseRouting();

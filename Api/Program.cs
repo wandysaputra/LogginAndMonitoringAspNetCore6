@@ -34,14 +34,16 @@ builder.Logging.ClearProviders();
 builder.Host.UseSerilog((context, loggerConfig) =>
 {
     loggerConfig
-    .WriteTo.Console() // Writes log events to System.Console
-    // .Enrich.WithCorrelationId()
-    .Enrich.WithCorrelationIdHeader()
-    .Enrich.WithClientIp()
-    .Enrich.WithClientAgent()
-    .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
-    .Enrich.WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
-    .WriteTo.Seq("http://localhost:5341");
+        .ReadFrom.Configuration(context.Configuration)
+        .WriteTo.Console() // Writes log events to System.Console
+        // .Enrich.WithCorrelationId()
+        .Enrich.WithCorrelationIdHeader()
+        .Enrich.WithClientIp()
+        .Enrich.WithClientAgent()
+        .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
+        .Enrich
+        .WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+        .WriteTo.Seq("http://localhost:5341");
 });
 
 /* https://hub.docker.com/r/splunk/splunk/
@@ -145,7 +147,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapFallback(() => Results.Redirect("/swagger"));
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();  // commented so Seq in docker can access it to do health check (note: change http://localhost:5164/health to http://host.docker.internal:5164/health)
 
 app.UseAuthentication();
 
