@@ -6,6 +6,7 @@ using Microsoft.Net.Http.Headers;
 using NLog;
 using NLog.Web;
 using Serilog;
+using Serilog.Enrichers.Span;
 using Serilog.Exceptions;
 using WebApp;
 
@@ -32,6 +33,22 @@ builder.Host.UseSerilog((context, loggerConfig) =>
         .Enrich.FromLogContext() // Enrich log events with properties from Context.LogContext.
         .Enrich
         .WithExceptionDetails() // Enrich logger output with a destructured object containing exception's public properties.
+        /* Field                        Description                                             Example
+         * ActionId                     Identifier for the action / route / page                de9ab21b-279b-42c6-b93e-b0d377c49f8e
+         * ActionName                   Name of the action / route / page                       Api.Controllers.ProductController.Get(Api)
+         *                                                                                      /Listing
+         * ConnectionID                 Can be shared across multiple navigations;              0HMFC25O20STO
+         *                              can change within session.          
+         * RequestID                    Combination of RequestID and a sequence                 0HMFC25O20STO:00000007
+         * (HttpContext.TraceIdentifer) number for a request within a Connection            
+         * TraceId                      Identifier for a logical transaction                    514b22c0573bf5b992354804a9993cac
+         * SpanId                       Identifier for an individual activity within a          1b6142c5188baad6
+         *                              trace (see TraceId)
+         * ParentId                     Formatted like span id but the span id of               f7ac2e649b1eca3a
+         *                              the activity that created the current one
+         *                              (0’s if no parent)                                      0000000000000000
+         */
+        .Enrich.With<ActivityEnricher>()
         .WriteTo.Seq("http://localhost:5341");
 });
 
