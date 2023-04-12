@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using NLog;
 using NLog.Web;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Enrichers.Span;
 using Serilog.Exceptions;
@@ -15,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 // builder.Logging.AddJsonConsole();
 // builder.Logging.AddDebug();
+// builder.Logging.AddSimpleConsole();
 // builder.Services.AddApplicationInsightsTelemetry();
 
 /* https://hub.docker.com/r/datalust/seq/
@@ -51,6 +54,22 @@ builder.Host.UseSerilog((context, loggerConfig) =>
         .Enrich.With<ActivityEnricher>()
         .WriteTo.Seq("http://localhost:5341");
 });
+
+/*
+ * docker run --name jaegar -p 13133:13133 -p 16686:16686 -p 4317:55680 -d --restart=unless-stopped jaegertracing/opentelemetry-all-in-one
+ */
+builder.Services.AddOpenTelemetry()
+    .WithTracing(providerBuilder =>
+    {
+        providerBuilder.SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317");
+            });
+    });
 
 /* https://hub.docker.com/r/splunk/splunk/
  * docker pull splunk/splunk

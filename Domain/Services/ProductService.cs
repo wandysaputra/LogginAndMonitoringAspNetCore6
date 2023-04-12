@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using System.Diagnostics;
+using Domain.Models;
 using Domain.Services.Interfaces;
 using Mapster;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,9 @@ public class ProductService : IProductService
     {
         _logger.LogInformation("Getting products in service for {category}", category);
 
+        Activity.Current?.AddEvent(new ActivityEvent("Getting products from repository"));
         var products = await _productRepository.GetProductsAsync(category);
+        Activity.Current?.AddEvent(new ActivityEvent("Retrieved products from repository"));
         
         return products.Adapt<IEnumerable<Product>>();
     }
